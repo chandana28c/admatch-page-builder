@@ -47,7 +47,17 @@ Deno.serve(async (req) => {
       }),
     });
 
-    const data = await response.json();
+    const responseText = await response.text();
+    let data: any;
+    try {
+      data = JSON.parse(responseText);
+    } catch {
+      console.error('Firecrawl returned non-JSON:', response.status, responseText.substring(0, 200));
+      return new Response(
+        JSON.stringify({ success: false, error: `Firecrawl returned an invalid response (${response.status}). The site may be unreachable. Try again.` }),
+        { status: 502, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
     if (!response.ok) {
       console.error('Firecrawl error:', data);
